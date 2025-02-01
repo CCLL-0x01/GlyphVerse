@@ -4,6 +4,8 @@ host = '127.0.0.1'
 port = 5000
 
 [model]
+device="cpu" #cpu, cuda
+dtype="float16" #float16 by defaut
 llm_prompt = """
 Give me a prompt of the subject and surrounding of the Chinese character(s) %s.
 The subject and each surrounding should be a few English words.
@@ -12,12 +14,19 @@ Don't be so descriptive. A pattern of adj. + n. is enough, and the noun should b
 Your answer should be json format like this:
 {
     "sub_prompt": "Your Subject",
-    "surr_prompt": "Your Surrounding1, Your Surrounding2,..." // 5-10 items
+    "surr_prompt": ["Your Surrounding1", "Your Surrounding2"] // 5-10 items
 }
 Example: If I give you the character 蔷, your answer should be:
 {
     "sub_prompt": "a red rose flower blooming ",
-    "surr_prompt": "brown vignette, leaf, slender branch, thorns in a romantic atmosphere "
+    "surr_prompt": ["brown vignette", "leaf", "slender branch", "thorns in a romantic atmosphere"]
 }
 Your answer should include nothing but json. 
 """
+positive_prompt = "complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
+negative_prompt = "vignetting, Camera dark angle, bad, deformed, ugly, lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed,blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+
+[model.name]
+controlnet_scribble="./model/model_weights/sd-controlnet-scribble"
+controlnet_seg="./model/model_weights/sd-controlnet-seg"
+stable_diffusion="./model/model_weights/stable-diffusion-v1-5"

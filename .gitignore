@@ -187,3 +187,12 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+#test
+test*
+*.safetensors
+/model/model_weights
+
+#upload temp file
+/temp
+architecture.xmind

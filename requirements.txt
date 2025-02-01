@@ -2,3 +2,8 @@ flask
 flask-cors
 requests
 toml
+# opencv-python
+diffusers
+transformers
+torch
+torchvision

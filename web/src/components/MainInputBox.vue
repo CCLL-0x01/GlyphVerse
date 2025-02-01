@@ -29,7 +29,7 @@ export default {
                 return;
             }
             this.enabled = false;
-            this.$emit('input', this.inputValue);
+            this.$emit('inputComplete', this.inputValue);
         }
     }
 };
