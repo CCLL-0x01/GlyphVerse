@@ -1,13 +1,17 @@
 <template>
-    <div class="container">
+    <div class="container-main">
         <AppHeader title="艺术字生成" />
         <MainInputBox @inputComplete="handleCharacterInput" />
-        <CharVisualEditor ref="editRef" @complete="handleCharEditComplete" v-if="[1,2,3].includes(state.state)" />
-        <PromptEditor ref="promptRef" @complete="handlePromptEditComplete" v-if="[2,3].includes(state.state)"/>
-        <!--v-show=state.promptLoaded -->
+        <div class="contents">
+            <div class="two-col">
+                <CharVisualEditor class="left-col" ref="editRef" @complete="handleCharEditComplete" v-if="[1,2,3].includes(state.state)" />
+                <PromptEditor class="right-col" ref="promptRef" v-if="[2,3].includes(state.state)"/>
+            <!--v-show=state.promptLoaded -->
+            </div>
 
-        <button v-if="state.state === 3" @click="handleGenerate">Generate</button>
-        <InferStatus v-if="state.state === 4" />
+            <button class="generate-button" v-if="state.state === 3" @click="handleGenerate">Generate</button>
+        </div>
+            <InferStatus v-if="state.state === 4" />
     </div>
 </template>
 
@@ -120,11 +124,14 @@ export default {
 </script>
 
 <style>
-.container {
+
+.container-main {
+
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
 }
 
 body {
@@ -136,5 +143,57 @@ body {
     margin: 0;
     background: linear-gradient(to right, #4a90e2, #9013fe);
     font-family: Arial, sans-serif;
+    overflow-y:auto;
+}
+
+.two-col {
+    display: flex;
+    justify-content: space-between;
+    width: 80vw;
+}
+
+.left-col {
+    display: inline-block;
+    width: 45%;
+}
+
+.right-col {
+    display: inline-block;
+    width: 45%;
+}
+
+.contents {
+    margin: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.generate-button:hover {
+    background-color: #ff00cc;
+}
+
+.generate-button {
+    margin-top: 20px;
+    padding: 20px 30px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.3s;
+    background-color: #aa49ff;
+    font-size: xx-large;
 }
 </style>

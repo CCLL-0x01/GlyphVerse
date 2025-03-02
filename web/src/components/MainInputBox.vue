@@ -24,8 +24,8 @@ export default {
         //},
         handleClick() {
             //console.log(this.inputValue)
-            if(this.inputValue == '' || !/[\u4e00-\u9fa5]/.test(this.inputValue.trim())){
-                alert('请输入汉字');
+            if(this.inputValue == '' || !/[\u4e00-\u9fa5]/.test(this.inputValue.trim()) || this.inputValue.trim().length > 1) {
+                alert('请输入一个汉字');
                 return;
             }
             this.enabled = false;
@@ -75,10 +75,10 @@ export default {
     transition: opacity 0.3s ease-in;
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.3); }
-  to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: scale(0.3); }
+    to { opacity: 1; transform: scale(1); }
 }
 .wrapper {
-  animation: fadeIn 0.3s /* 应用动画 */
+    animation: fadeIn 0.3s /* 应用动画 */
 }
 </style>

@@ -1040,7 +1040,7 @@ class StableDiffusionControlNetsPipeline(
         addl_ctrl_guidance_end: Union[float, List[float]] = 1.0, 
 
         save_mid_res = False,
-      
+
         **kwargs,
     ):
         r"""

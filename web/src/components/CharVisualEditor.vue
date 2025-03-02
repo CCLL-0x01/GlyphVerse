@@ -1,10 +1,13 @@
 <template>
-    <canvas :width="width" :height="height" ref="canvas" @mousedown="handleMousedown" @mousemove="handleMousemove"
-        @mouseup="handleMouseup" @touchstart.prevent="handleMousedown" @touchmove.prevent="handleMousemove"
-        @touchend.prevent="handleMouseup"></canvas>
-    <div class="confirm-btns" v-if="state == 2">
-        <button @click="handleConfirmBtn">√</button>
-        <button @click="handleResetBtn">×</button>
+    <div class="container">
+        <label>圈出主体部分</label>
+        <canvas :width="width" :height="height" ref="canvas" @mousedown="handleMousedown" @mousemove="handleMousemove"
+            @mouseup="handleMouseup" @touchstart.prevent="handleMousedown" @touchmove.prevent="handleMousemove"
+            @touchend.prevent="handleMouseup"></canvas>
+        <div class="confirm-btns" v-if="state == 2">
+            <button @click="handleConfirmBtn">√</button>
+            <button @click="handleResetBtn">×</button>
+        </div>
     </div>
 </template>
 
@@ -233,7 +236,58 @@ export default {
 </script>
 
 <style scoped>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 canvas {
-    border: 1px solid #000;
+    border: none;
+}
+
+.container {
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    padding: 15px;
+    margin: 10px;
+    animation: fadeIn 0.5s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+label {
+    display: block;
+    font-size: larger;
+    margin-left: 13px;
+    color: white;
+    text-align: center;
+}
+
+button {
+    margin-top: 10px;
+    margin-left: 15px;
+    padding: 10px 20px;
+    background-color: #4a90e2;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    color: white;
+    transition: background-color 0.3s;
+    animation: fadeIn 0.5s;
+}
+
+button:hover {
+    background-color: #7ebaff;
+}
+
+.confirm-btns {
+    display: flex;
+    justify-content: center;
 }
 </style>
