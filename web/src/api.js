@@ -50,3 +50,34 @@ export async function query_status(uuid) {
         return data.status
     }
 }
+
+export async function start_mask_gen(req_data) {
+    var response = await fetch(`${urlPrefix}/mask/start`,{
+        method:'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(req_data)
+    });
+
+    var data = await response.json();
+    if (data.code != 0) {
+        throw Error(`Request Failure: ${data.message}`);
+    } else {
+        return {
+            'uuid':response.uuid,
+            'job_uuid':response.job_uuid
+        }
+    }
+
+}
+
+export async function query_mask_status(uuid) {
+    var response = await fetch(`${urlPrefix}/mask/status/${uuid}`);
+    var data = await response.json();
+    if (data.code != 0) {
+        throw Error(`Request Failure: ${data.message}`);
+    } else {
+        return data.status
+    }
+}

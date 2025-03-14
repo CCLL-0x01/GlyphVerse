@@ -13,7 +13,7 @@ from diffusers import StableDiffusionControlNetPipeline, ControlNetModel
 from PIL import Image
 
 from .controlnets import StableDiffusionControlNetsPipeline
-from .DDIMScheduler_L import DDIMScheduler_L #?
+from .DDIMScheduler_L import DDIMScheduler_L
 
 class IMGGenerator(Worker):
     '''
@@ -37,8 +37,6 @@ class IMGGenerator(Worker):
         self.result_img_uuid=result_img_uuid
         self.seed=seed
 
-
-
     def worker(self):
         self.load_config()
         #检查参数
@@ -53,24 +51,24 @@ class IMGGenerator(Worker):
             self.progress.value=step
 
         #pipeline
-        result_img = self.sd_pipe( #TODO move to config
+        result_img = self.sd_pipe( 
             prompt = ', '.join(self.surr_prompt),
             image = [self.surr_image],
             height = self.sub_image.size[0], 
             width = self.sub_image.size[1], 
-            num_inference_steps = 50,
-            guidance_scale = 15, 
+            num_inference_steps = self.num_inference_steps,
+            guidance_scale = self.guidance_scale,
             negative_prompt = self.negative_prompt,
             generator = torch.manual_seed(self.seed),
-            controlnet_conditioning_scale = [0.97],
+            controlnet_conditioning_scale = [self.controlnet_conditioning_scale],
 
             addl_prompts = [self.sub_prompt],
             addl_images = [[self.sub_image] * len(self.controlnet_sub)],
-            weights = [0.85],
+            weights = [self.weights], 
             masks = [self.mask],
-            addl_ctrlnet_conditioning_scale = [1.1],
+            addl_ctrlnet_conditioning_scale = [self.addl_controlnet_conditioning_scale],
             callback=step_callback,
-            callback_steps=1,
+            callback_steps=self.callback_steps,
         )
         result_img.images[0].save(f"./temp/{self.result_img_uuid}.png")
     # def on_step(self,fn):
@@ -81,8 +79,14 @@ class IMGGenerator(Worker):
         self.sd_name = config["model"]["name"]["stable_diffusion"]
         self.scr_name= config["model"]["name"]["controlnet_scribble"]
         self.seg_name= config["model"]["name"]["controlnet_scribble"]
-        self.positive_prompt=config["model"]["positive_prompt"]
-        self.negative_prompt=config["model"]["negative_prompt"]
+        self.positive_prompt=config["model"]["prompts"]["positive_prompt"]
+        self.negative_prompt=config["model"]["prompts"]["negative_prompt"]
+        self.num_inference_steps=config["model"]["inference"]["num_inference_steps"]
+        self.guidance_scale=config["model"]["inference"]["guidance_scale"]
+        self.controlnet_conditioning_scale=config["model"]["inference"]["controlnet_conditioning_scale"]
+        self.weights=config["model"]["inference"]["weights"]
+        self.addl_controlnet_conditioning_scale=config["model"]["inference"]["addl_controlnet_conditioning_scale"]
+        self.callback_steps=config["model"]["inference"]["callback_steps"]
         
     def prepare_model(self):
         # load control net

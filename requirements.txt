@@ -7,3 +7,5 @@ diffusers
 transformers
 torch
 torchvision
+openai
+controlnet_aux

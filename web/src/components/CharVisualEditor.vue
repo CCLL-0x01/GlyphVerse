@@ -39,7 +39,7 @@ export default {
     props: {
         size: {
             type: Number,
-            default: 500,
+            default: 500, //TODO: allow to customize img size 
             required: false,
         }
     },

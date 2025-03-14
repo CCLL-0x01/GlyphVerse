@@ -11,7 +11,8 @@
 
             <button class="generate-button" v-if="state.state === 3" @click="handleGenerate">Generate</button>
         </div>
-            <InferStatus v-if="state.state === 4" />
+        <MaskInferStatus v-if="state.state == 4"/>
+        <InferStatus v-if="state.state === 5" />
     </div>
 </template>
 
@@ -23,6 +24,7 @@ import PromptEditor from './components/PromptEditor.vue';
 import InferStatus from './components/InferStatus.vue';
 import { reactive, ref, nextTick, provide } from 'vue';
 import { generate_character_prompt, upload_img_data } from './api';
+import MaskInferStatus from './components/MaskInferStatus.vue';
 
 export default {
     name: 'App',
@@ -32,6 +34,7 @@ export default {
         CharVisualEditor,
         PromptEditor,
         InferStatus,
+        MaskInferStatus
     },
     setup() {
         // 创建响应式的 state 对象
@@ -57,6 +60,7 @@ export default {
                 surr_prompt: [],
             },
             mask: "",
+            beautified_mask: "",
             char_img: "",
         });
 
@@ -109,6 +113,12 @@ export default {
             state.changeState(4);
         }
 
+        const handleMaskGenerate = function (choosenUuid){
+            char_data.beautified_mask=choosenUuid;
+            console.log(`beautified: ${choosenUuid}`);
+            state.changeState(5);
+        }
+
         return {
             handleCharacterInput,
             handleGenerate,
@@ -117,7 +127,8 @@ export default {
             handleCharEditComplete,
             char_data,
             // handlePromptEditComplete,
-            promptRef
+            promptRef,
+            handleMaskGenerate
         };
     },
 };

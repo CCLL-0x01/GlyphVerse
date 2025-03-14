@@ -1,17 +1,37 @@
-[server] # flask app settings in app.run()
+[server]        # flask app settings in app.run()
 debug = true
 host = '127.0.0.1'
 port = 5000
 
-[model.name]
+[model]
+device="cpu"    #cpu or cuda
+dtype="float16" #float16 by defaut
+
+[model.name]    #path of the models
 controlnet_scribble="./model/model_weights/sd-controlnet-scribble"
 controlnet_seg="./model/model_weights/sd-controlnet-seg"
 stable_diffusion="./model/model_weights/stable-diffusion-v1-5"
+sd_depth="stabilityai/stable-diffusion-2-depth"
 
-[model]
-device="cpu" #cpu or cuda
-dtype="float16" #float16 by defaut
+[model.inference]
+num_inference_steps=50
+guidance_scale=15
+controlnet_conditioning_scale=0.80
+weights=0.85
+addl_controlnet_conditioning_scale=1.1
+callback_steps=1
 
+[model.typo]
+guidance_scale=15
+strength=0.78
+gen_num=5
+
+[model.LLM]
+LLM_base_url="https://api.deepseek.com"
+model_name="deepseek-chat"
+
+[model.prompts]
+typo_prompt_template="a black and white drawing of %s" # %s refers to sub_prompt
 positive_prompt = "complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
 negative_prompt = "vignetting, Camera dark angle, bad, deformed, ugly, lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed,blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 llm_prompt = """

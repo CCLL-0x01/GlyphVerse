@@ -161,7 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-/model/LLM_api.py
+/model/LLM_api_.py
 # Node
 /web/node_modules
 /web/dist
@@ -200,3 +200,5 @@ test*
 !/temp
 
 architecture.xmind
+
+/config/API_KEY

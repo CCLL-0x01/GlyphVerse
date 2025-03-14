@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from config import config
-from model import knowledge_acquisition, IMGGenerator
+from model import knowledge_acquisition, IMGGenerator, MaskBeautifier
 from uuid import uuid4
 import os.path
 from typing import Dict
@@ -16,6 +16,9 @@ def create_server():
     )
     if config["server"]["debug"]:
         CORS(app)
+    
+    if not os.path.exists("./temp"): #temp folder
+        os.mkdir("./temp")
     
     @app.route('/')
     def index():
@@ -65,6 +68,7 @@ def create_server():
         print(temp_dir)
         return send_from_directory(temp_dir, filename)
     
+    # image generator
     app.image_generator_workers={}
     @app.route('/start',methods=['POST'])
     def start():
@@ -98,6 +102,49 @@ def create_server():
                 "code":0,
                 "message":"success",
                 "status":app.image_generator_workers[uuid].get_status(),
+            })
+        else:
+            return jsonify({
+                "code":-1,
+                "message":"not found",
+            })
+
+    #mask generator
+    app.mask_generator_workers={}
+    @app.route('/mask/start',methods=['POST'])
+    def mask_start():
+        try:
+            req_json=request.get_json()
+            result_img_uuids=[str(uuid4()) for _ in range(config['model']['typo']['gen_num'])]
+            job_uuid=str(uuid4())
+            msk_gen=MaskBeautifier(
+                req_json["char_img"],
+                req_json["mask"],
+                req_json["prompts"]["sub_prompt"],
+                req_json["prompts"]["surr_prompt"],
+                result_img_uuids
+            )
+            app.mask_generator_workers[job_uuid]=msk_gen
+            msk_gen.run()
+            return jsonify({
+                "code":0,
+                "message":"success",
+                "uuid":result_img_uuids,
+                "job_uuid":job_uuid
+            })
+        except Exception as e:
+            return jsonify({
+                "code":-1,
+                "message":str(e),
+            })
+
+    @app.route('/mask/status/<uuid>',methods=['GET'])
+    def mask_status(uuid):
+        if uuid in app.mask_generator_workers:
+            return jsonify({
+                "code":0,
+                "message":"success",
+                "status":app.mask_generator_workers[uuid].get_status(),
             })
         else:
             return jsonify({
