@@ -65,8 +65,8 @@ export async function start_mask_gen(req_data) {
         throw Error(`Request Failure: ${data.message}`);
     } else {
         return {
-            'uuid':response.uuid,
-            'job_uuid':response.job_uuid
+            'uuid':data.uuid,
+            'job_uuid':data.job_uuid
         }
     }
 

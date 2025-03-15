@@ -191,8 +191,9 @@ pnpm-debug.log*
 #test
 test*
 *.safetensors
-/model/model_weights/*
-!/model/model_weights
+/model/model_weights/
+/model/model_weights
+# !/model/model_weights
 
 
 #upload temp file

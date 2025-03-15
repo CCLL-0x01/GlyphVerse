@@ -11,7 +11,7 @@
 
             <button class="generate-button" v-if="state.state === 3" @click="handleGenerate">Generate</button>
         </div>
-        <MaskInferStatus v-if="state.state == 4"/>
+        <MaskInferStatus v-if="state.state == 4" @complete="handleMaskGenerate"/>
         <InferStatus v-if="state.state === 5" />
     </div>
 </template>

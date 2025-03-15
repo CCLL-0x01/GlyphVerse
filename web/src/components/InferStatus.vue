@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import { inject, reactive, ref } from 'vue';
+import { inject, nextTick, reactive, ref } from 'vue';
 import { start_inference, query_status } from '../api';
 
 export default {
@@ -23,6 +23,7 @@ export default {
 
         const initialize = async () => {
             result_uuid.value = await start_inference(char_data);
+            console.log(result_uuid.value)
             const intervalId = setInterval(async () => {
                 const status = await query_status(result_uuid.value);
                 progress.status = status.status;
@@ -32,8 +33,7 @@ export default {
                 }
             }, 3000);
         };
-
-        initialize();
+        nextTick(initialize)
 
         return {
             progress,

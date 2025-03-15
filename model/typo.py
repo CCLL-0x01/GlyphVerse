@@ -36,14 +36,16 @@ class MaskBeautifier(Worker):
         # self.surr_result_uuid=str(uuid4())
     
     def load_models(self):
-        self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
-            pretrained_model_name_or_path=self.d2i_name,
-            torch_dtype=torch.float16 #TODO:dtype
-        ).to(self.device)
         self.scribble_preprocess = HEDdetector.from_pretrained(
             pretrained_model_or_path='lllyasviel/Annotators',
             filename='ControlNetHED.pth', 
             # torch_dtype=torch.float16 #TODO:dtype
+        ).to(self.device)
+        self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
+            pretrained_model_name_or_path=self.d2i_name,
+            torch_dtype=torch.float16, #TODO:dtype
+            device=self.device,
+            local_files_only=True
         ).to(self.device)
 
     def load_config(self):
@@ -85,7 +87,7 @@ class MaskBeautifier(Worker):
             image_resolution=500,
         )
         # surr_scribble.save(f'./temp/{self.surr_result_uuid}.png')
-        new_surr_array=np.array(surr_scribble.convert('L')).astype(np.uint8)
+        new_surr_array=np.array(surr_scribble.convert('L').resize((500,500))).astype(np.uint8)
         progress+=1
         self.progress.value+=1
 
@@ -103,9 +105,9 @@ class MaskBeautifier(Worker):
                 generator=torch.manual_seed(random.randint(0,1000-1))
             ).images[0]
             # sub_depth.save(f'./temp/{result_uuid}.png')
-            new_sub_array=np.array(sub_depth.convert('L')).astype(np.uint8)
-            new_img=Image.fromarray(np.max(new_sub_array, new_surr_array)).convert('RGB')
-            new_img.save(f'/temp/{result_uuid}.png')
+            new_sub_array=np.array(sub_depth.convert('L').resize((500,500))).astype(np.uint8)
+            new_img=Image.fromarray(np.where(new_sub_array> new_surr_array, new_sub_array, new_surr_array)).convert('RGB')
+            new_img.save(f'./temp/{result_uuid}.png')
             progress+=1
             self.progress.value=progress
 
