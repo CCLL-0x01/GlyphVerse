@@ -16,14 +16,14 @@ sd_depth="stabilityai/stable-diffusion-2-depth"
 [model.inference]
 num_inference_steps=50
 guidance_scale=15
-controlnet_conditioning_scale=0.80
+controlnet_conditioning_scale=1.2
 weights=0.85
-addl_controlnet_conditioning_scale=1.1
+addl_controlnet_conditioning_scale=1.9
 callback_steps=1
 
 [model.typo]
-guidance_scale=15
-strength=0.78
+guidance_scale=35
+strength=0.85
 gen_num=5
 
 [model.LLM]
@@ -31,9 +31,9 @@ LLM_base_url="https://api.deepseek.com"
 model_name="deepseek-chat"
 
 [model.prompts]
-typo_prompt_template="a black and white drawing of %s" # %s refers to sub_prompt
-positive_prompt = "complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
-negative_prompt = "vignetting, Camera dark angle, bad, deformed, ugly, lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed,blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+typo_prompt_template="a black and white drawing of {sub_prompt}, {positive_prompt}" 
+positive_prompt = "no humans, sunlight, TOON, no vignetting, complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space "
+negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed,blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 llm_prompt = """
 Give me a prompt of the subject and surrounding of the Chinese character(s) %s.
 The subject and each surrounding should be a few English words.

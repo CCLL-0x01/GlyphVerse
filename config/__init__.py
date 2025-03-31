@@ -1,7 +1,16 @@
 import toml
+from typing import Dict, Any
 
-config:dict = toml.load('./config/config.toml')
+class Config(dict):  # 继承自字典类型
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reload()  # 初始化时自动加载
 
-API_KEY:str=""
-with open('./config/API_KEY',"r") as f:
-    API_KEY=f.read()
+    def reload(self) -> None:
+        self.clear()
+        self.update(toml.load('./config/config.toml'))
+
+        with open('./config/API_KEY', 'r') as f:
+            self['API_KEY'] = f.read().strip()
+
+config: Dict[str, Any] = Config() 

@@ -52,7 +52,7 @@ class IMGGenerator(Worker):
 
         #pipeline
         result_img = self.sd_pipe( 
-            prompt = ', '.join(self.surr_prompt),
+            prompt = ', '.join(self.surr_prompt)+', '+self.positive_prompt,
             image = [self.surr_image],
             height = self.sub_image.size[0], 
             width = self.sub_image.size[1], 
@@ -67,6 +67,7 @@ class IMGGenerator(Worker):
             weights = [self.weights], 
             masks = [self.mask],
             addl_ctrlnet_conditioning_scale = [self.addl_controlnet_conditioning_scale],
+
             callback=step_callback,
             callback_steps=self.callback_steps,
         )

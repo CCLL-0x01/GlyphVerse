@@ -95,7 +95,10 @@ class MaskBeautifier(Worker):
         W, H = self.sub_img.size
         for result_uuid  in self.result_img_uuids:
             sub_depth=self.d2i(
-                prompt= self.prompt_template % self.sub_prompt,
+                prompt= self.prompt_template.format(
+                    sub_prompt=self.sub_prompt,
+                    positive_prompt=self.positive_prompt
+                ),
                 image=self.sub_img, 
                 guidance_scale=self.guidance_scale,
                 height=H,
