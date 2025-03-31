@@ -194,6 +194,7 @@ test*
 /model/model_weights/
 /model/model_weights
 # !/model/model_weights
+/model/loras
 
 
 #upload temp file

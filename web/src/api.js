@@ -81,3 +81,9 @@ export async function query_mask_status(uuid) {
         return data.status
     }
 }
+
+export async function get_lora_list() {
+    var response=await fetch(`${urlPrefix}/lora_list`);
+    var data=await response.json();
+    return data.lora_list;
+}

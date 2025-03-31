@@ -8,11 +8,19 @@
         <div ref="imageGroup" v-if="progress.status=='Complete'">
             <img v-for="uuid in result_uuids" :key="uuid" :src="`/temp/${uuid}.png`" :data-uuid="uuid" @click="handleClick"/>
         </div>
+        <div ref="loraChooserContainer">
+            <input type="checkbox" v-model="lora_enabled"/> Generate with LoRA:
+            <select :disabled="!lora_enabled" v-model="chosen_lora">
+                <option v-for="lora in lora_list" :key="lora" >
+                    {{lora}}
+                </option>
+            </select>
+        </div>
     </div>
 </template>
 <script>
 import {inject, reactive, ref} from 'vue';
-import { start_mask_gen, query_mask_status } from '@/api';
+import { start_mask_gen, query_mask_status, get_lora_list } from '@/api';
 
 export default {
     setup(props, { emit }){
@@ -28,6 +36,10 @@ export default {
         var result_uuids=ref([]);
         var job_uuid=ref(null);
 
+        var lora_enabled=ref(false);
+        var lora_list=ref([]);
+        var chosen_lora=ref('');
+
         const initialize=async function(){
             var response=await start_mask_gen(char_data);
             result_uuids.value=response.uuid;
@@ -39,13 +51,19 @@ export default {
                 if(status.status=='Complete'){
                     clearInterval(intervalId);
                 }
-            },3000)
+            },3000);
+
+            lora_list.value=await get_lora_list();
         }
 
         const handleClick=function(event){
-            const chossenUuid=event.target.dataset.uuid;
-            console.log(`choosing mask uuid: ${chossenUuid}`);
-            emit('complete', chossenUuid);
+            const chosenUuid=event.target.dataset.uuid;
+            console.log(`choosing mask uuid: ${chosenUuid}`);
+            emit('complete', {
+                "chosenUuid":chosenUuid,
+                "lora_enabled":lora_enabled,
+                "lora":chosen_lora
+            });
         }
 
         initialize();
@@ -53,6 +71,9 @@ export default {
             handleClick,
             progress,
             result_uuids,
+            lora_enabled,
+            lora_list,
+            chosen_lora
         }
     }
 }

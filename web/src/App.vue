@@ -62,6 +62,7 @@ export default {
             mask: "",
             beautified_mask: "",
             char_img: "",
+            lora: ""
         });
 
         provide('char_data', char_data);
@@ -113,9 +114,11 @@ export default {
             state.changeState(4);
         }
 
-        const handleMaskGenerate = function (choosenUuid){
-            char_data.beautified_mask=choosenUuid;
-            console.log(`beautified: ${choosenUuid}`);
+        const handleMaskGenerate = function (data){
+            var {chosenUuid, lora_enabled, lora} = data;
+            char_data.beautified_mask=chosenUuid;
+            char_data.lora=lora_enabled.value?lora:null;
+            console.log(`beautified: ${chosenUuid}`);
             state.changeState(5);
         }
 

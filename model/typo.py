@@ -57,6 +57,7 @@ class MaskBeautifier(Worker):
         self.negative_prompt=config['model']['prompts']['negative_prompt']
         self.strength=config['model']['typo']['strength']
         self.guidance_scale=config['model']['typo']['guidance_scale']
+        self.positive_prompt=config['model']['prompts']['positive_prompt']
 
 
     def load_images(self):

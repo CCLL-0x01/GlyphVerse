@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory
 from flask_cors import CORS
 from config import config
 from model import knowledge_acquisition, IMGGenerator, MaskBeautifier
+from model.lora import get_lora_files
 from uuid import uuid4
 import os.path
 from typing import Dict
@@ -80,7 +81,8 @@ def create_server():
                 req_json["prompts"]["surr_prompt"],
                 req_json["char_img"],
                 req_json["mask"],
-                result_img_uuid
+                result_img_uuid,
+                req_json["lora"],
             )
             app.image_generator_workers[img_gen.result_img_uuid]=img_gen
             img_gen.run()
@@ -152,5 +154,12 @@ def create_server():
                 "message":"not found",
             })
 
+    @app.route('/lora_list',methods=['GET'])
+    def lora_list():
+        return jsonify({
+            "code":0,
+            "message":"success",
+            "lora_list":get_lora_files()
+        })
 
     return app

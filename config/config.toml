@@ -51,3 +51,7 @@ Example: If I give you the character 蔷, your answer should be:
 }
 Your answer should include nothing but json. 
 """
+
+[lora]
+path = "./model/loras"
+ext = ['.safetensors', '.bin', '.pt', '.pth']

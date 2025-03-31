@@ -1,7 +1,7 @@
 from util.worker import Worker
 from util.path import get_model_path
 from config import config
-
+import warnings
 import json
 import random
 
@@ -27,6 +27,7 @@ class IMGGenerator(Worker):
             char_img_uuid:str,
             mask_img_uuid:str,
             result_img_uuid:str,
+            lora:str,
             seed:int=random.sample(range(100000),1)[0],
         ):
         super().__init__()
@@ -36,6 +37,7 @@ class IMGGenerator(Worker):
         self.mask_img_uuid=mask_img_uuid
         self.result_img_uuid=result_img_uuid
         self.seed=seed
+        self.lora=lora
 
     def worker(self):
         self.load_config()
@@ -88,6 +90,7 @@ class IMGGenerator(Worker):
         self.weights=config["model"]["inference"]["weights"]
         self.addl_controlnet_conditioning_scale=config["model"]["inference"]["addl_controlnet_conditioning_scale"]
         self.callback_steps=config["model"]["inference"]["callback_steps"]
+        self.lora_path=config["lora"]["path"]
         
     def prepare_model(self):
         # load control net
@@ -115,7 +118,12 @@ class IMGGenerator(Worker):
         ).to(device=self.device)
         self.sd_pipe.register_addl_models(self.sd_sub)
         self.sd_pipe.schedule = DDIMScheduler_L.from_config(self.sd_pipe.scheduler.config)
-        # sd_pipe.load_lora_weights('./loras', weight_name='pytorch_lora_weights.safetensors')
+        if self.lora:
+            try:
+                self.sd_pipe.load_lora_weights(self.lora_path, weight_name=self.lora)
+            except Exception as e:
+                warnings.warn(f"Error loading lora, lora will be ignored. Error: {str(e)}")
+
     def prepare_image(self):
         mask_img=Image.open(f"./temp/{self.mask_img_uuid}.png")
         char_img=Image.open(f"./temp/{self.char_img_uuid}.png")
