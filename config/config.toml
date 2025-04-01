@@ -32,8 +32,8 @@ model_name="deepseek-chat"
 
 [model.prompts]
 typo_prompt_template="a black and white drawing of {sub_prompt}, {positive_prompt}" 
-positive_prompt = "no humans, sunlight, TOON, no vignetting, complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space "
-negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed,blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+positive_prompt = "no humans, no vignetting, complete, beautiful, clear,  elegant, artistic, (easy background), (plain background), (simple background), (clean background), easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space "
+negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 llm_prompt = """
 Give me a prompt of the subject and surrounding of the Chinese character(s) %s.
 The subject and each surrounding should be a few English words.

@@ -2,8 +2,8 @@
     <div class="container">
         <p ref="refTxt">{{ 
             progress.status !='Complete' ?
-            `Preparing Mask - Step ${progress.progress}`:
-            "Choose one of the masks below: "
+            `正在生成艺术字形 - 第${progress.progress}步`:
+            "请在下面选择一个字形："
         }}</p>
         <div ref="imageGroup" v-if="progress.status=='Complete'">
             <img v-for="uuid in result_uuids" :key="uuid" :src="`/temp/${uuid}.png`" :data-uuid="uuid" @click="handleClick"/>
@@ -12,7 +12,7 @@
 
     <div class="container">
         <div ref="loraChooserContainer">
-            <input type="checkbox" v-model="lora_enabled"/> Generate with LoRA:
+            <input type="checkbox" v-model="lora_enabled"/> 使用LoRA增强生成：
             <select :disabled="!lora_enabled" v-model="chosen_lora">
                 <option v-for="lora in lora_list" :key="lora" >
                     {{lora}}
