@@ -8,6 +8,9 @@
         <div ref="imageGroup" v-if="progress.status=='Complete'">
             <img v-for="uuid in result_uuids" :key="uuid" :src="`/temp/${uuid}.png`" :data-uuid="uuid" @click="handleClick"/>
         </div>
+    </div>
+
+    <div class="container">
         <div ref="loraChooserContainer">
             <input type="checkbox" v-model="lora_enabled"/> Generate with LoRA:
             <select :disabled="!lora_enabled" v-model="chosen_lora">
@@ -83,5 +86,27 @@ img {
     max-width: 100px;
     padding: 10px;
     display: inline-block;
+}
+
+.container {
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    padding: 30px 60px;
+    margin: 20px;
+    animation: fadeIn 0.5s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 </style>
