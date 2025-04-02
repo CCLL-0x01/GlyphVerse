@@ -35,12 +35,12 @@ class IMGGenerator(EventlessWorker):
             self.sd_name,
             controlnet= self.controlnet_sub,
             # torch_dtype=dtype
-        ).to(device=self.device)
+        ).to('cpu')
         self.sd_pipe = StableDiffusionControlNetsPipeline.from_pretrained(
             self.sd_name,
             controlnet= self.controlnet_surr,
             # torch_=dtype
-        ).to(device=self.device)
+        ).to('cpu')
         self.sd_pipe.register_addl_models(self.sd_sub)
         self.sd_pipe.schedule = DDIMScheduler_L.from_config(self.sd_pipe.scheduler.config)
 
@@ -149,7 +149,8 @@ class IMGGenerator(EventlessWorker):
         else:
             self.sd_pipe.unload_lora_weights()
         
-
+        self.sd_pipe.to(self.device)
+        self.sd_sub.to(self.device)
         self.prepare_image()
 
         def step_callback(step: int, timestep: int, latents: torch.FloatTensor):
@@ -176,4 +177,8 @@ class IMGGenerator(EventlessWorker):
             callback_steps=self.callback_steps,
         )
         result_img.images[0].save(f"./temp/{self.result_img_uuid}.png")
+
+        self.sd_pipe.to('cpu')
+        self.sd_sub.to('cpu')
+        torch.cuda.empty_cache()
         return self.num_inference_steps

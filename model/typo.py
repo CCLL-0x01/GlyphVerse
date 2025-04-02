@@ -24,10 +24,10 @@ class MaskBeautifier(EventlessWorker):
         ).to(self.device)
         self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
             pretrained_model_name_or_path=self.d2i_name,
-            # torch_dtype=torch.float16, #TODO:dtype
+            torch_dtype=torch.float16, #TODO:dtype
             device=self.device,
             local_files_only=True
-        ).to(self.device)
+        ).to('cpu')
 
     def load_config(self):
         self.device=config['model']['device']
@@ -67,6 +67,7 @@ class MaskBeautifier(EventlessWorker):
         self.result_img_uuids=kwargs['result_img_uuids']
 
         self.load_images()
+        self.d2i=self.d2i.to(self.device)
 
         progress=0
         # surr img
@@ -102,6 +103,9 @@ class MaskBeautifier(EventlessWorker):
             new_img.save(f'./temp/{result_uuid}.png')
             progress+=1
             self.progress.value=progress
+
+        self.d2i=self.d2i.to('cpu')
+        torch.cuda.empty_cache()
         return progress
 
 

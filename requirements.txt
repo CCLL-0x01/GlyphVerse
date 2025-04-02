@@ -10,3 +10,4 @@ torchvision
 openai
 controlnet_aux
 peft
+accelerate
