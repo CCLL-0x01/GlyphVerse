@@ -1,6 +1,5 @@
 import toml
 from typing import Dict, Any
-import torch
 
 class Config(dict):  # 继承自字典类型
     def __init__(self, *args, **kwargs):
@@ -13,8 +12,7 @@ class Config(dict):  # 继承自字典类型
 
         with open('./config/API_KEY', 'r') as f:
             self['API_KEY'] = f.read().strip()
+        
+        print('config reloaded: ',self)
 
-        if self['model']['device']=='auto':
-            self['model']['device']='cuda' if torch.cuda.is_available() else 'cpu'
-
-config: Dict[str, Any] = Config() 
+config: Config = Config() 
