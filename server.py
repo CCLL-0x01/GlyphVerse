@@ -217,5 +217,6 @@ def create_server():
     
     app.mask_generator.start()
     app.image_generator.start()
+    print('models ready')
 
     return app

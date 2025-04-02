@@ -4,7 +4,7 @@ host = '127.0.0.1'
 port = 5000
 
 [model]
-device="cuda"    #cpu or cuda
+device="auto"    #auto, cpu, cuda
 dtype="float16" #float16 by defaut
 
 [model.name]    #path of the models
@@ -29,6 +29,7 @@ gen_num=5
 [model.LLM]
 LLM_base_url="https://api.deepseek.com"
 model_name="deepseek-chat"
+cache_path="./temp/LLM_cache.json"
 
 [model.prompts]
 typo_prompt_template="a black and white drawing of {sub_prompt}, {positive_prompt}" 

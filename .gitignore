@@ -200,6 +200,7 @@ test*
 #upload temp file
 /temp/*
 !/temp
+# !/temp/LLM_cache.json
 
 architecture.xmind
 

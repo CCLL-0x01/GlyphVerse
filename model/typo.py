@@ -24,7 +24,7 @@ class MaskBeautifier(EventlessWorker):
         ).to(self.device)
         self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
             pretrained_model_name_or_path=self.d2i_name,
-            torch_dtype=torch.float16, #TODO:dtype
+            torch_dtype=torch.float16 if self.device=='cuda' else torch.float, #TODO:dtype
             device=self.device,
             local_files_only=True
         ).to('cpu')
