@@ -4,7 +4,7 @@ host = '127.0.0.1'
 port = 5000
 
 [model]
-device="cpu"    #cpu or cuda
+device="cuda"    #cpu or cuda
 dtype="float16" #float16 by defaut
 
 [model.name]    #path of the models

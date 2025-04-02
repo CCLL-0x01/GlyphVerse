@@ -1,4 +1,4 @@
-from util.worker import Worker
+from util.worker import EventlessWorker
 from util.path import get_model_path
 from config import config
 import warnings
@@ -15,83 +15,8 @@ from PIL import Image
 from .controlnets import StableDiffusionControlNetsPipeline
 from .DDIMScheduler_L import DDIMScheduler_L
 
-class IMGGenerator(Worker):
-    '''
-    generate img with diffusion
-    '''
 
-    def __init__(
-            self,
-            sub_prompt:str, 
-            surr_prompt:str, #comma separate str
-            char_img_uuid:str,
-            mask_img_uuid:str,
-            result_img_uuid:str,
-            lora:str,
-            seed:int=random.sample(range(100000),1)[0],
-        ):
-        super().__init__()
-        self.sub_prompt=sub_prompt
-        self.surr_prompt=surr_prompt
-        self.char_img_uuid=char_img_uuid
-        self.mask_img_uuid=mask_img_uuid
-        self.result_img_uuid=result_img_uuid
-        self.seed=seed
-        self.lora=lora
-
-    def worker(self):
-        self.load_config()
-        #检查参数
-        # assert self.sub_prompt
-        # assert self.surr_prompt
-
-        self.prepare_image()
-        self.prepare_model()
-
-        #callback
-        def step_callback(step: int, timestep: int, latents: torch.FloatTensor):
-            self.progress.value=step
-
-        #pipeline
-        result_img = self.sd_pipe( 
-            prompt = ', '.join(self.surr_prompt)+', '+self.positive_prompt,
-            image = [self.surr_image],
-            height = self.sub_image.size[0], 
-            width = self.sub_image.size[1], 
-            num_inference_steps = self.num_inference_steps,
-            guidance_scale = self.guidance_scale,
-            negative_prompt = self.negative_prompt,
-            generator = torch.manual_seed(self.seed),
-            controlnet_conditioning_scale = [self.controlnet_conditioning_scale],
-
-            addl_prompts = [self.sub_prompt],
-            addl_images = [[self.sub_image] * len(self.controlnet_sub)],
-            weights = [self.weights], 
-            masks = [self.mask],
-            addl_ctrlnet_conditioning_scale = [self.addl_controlnet_conditioning_scale],
-
-            callback=step_callback,
-            callback_steps=self.callback_steps,
-        )
-        result_img.images[0].save(f"./temp/{self.result_img_uuid}.png")
-    # def on_step(self,fn):
-    #     self.callback=fn
-    def load_config(self):
-        self.device = config["model"]["device"]
-        self.dtype=config["model"].get("dtype","float16")
-        self.sd_name = config["model"]["name"]["stable_diffusion"]
-        self.scr_name= config["model"]["name"]["controlnet_scribble"]
-        self.seg_name= config["model"]["name"]["controlnet_scribble"]
-        self.positive_prompt=config["model"]["prompts"]["positive_prompt"]
-        self.negative_prompt=config["model"]["prompts"]["negative_prompt"]
-        self.num_inference_steps=config["model"]["inference"]["num_inference_steps"]
-        self.guidance_scale=config["model"]["inference"]["guidance_scale"]
-        self.controlnet_conditioning_scale=config["model"]["inference"]["controlnet_conditioning_scale"]
-        self.weights=config["model"]["inference"]["weights"]
-        self.addl_controlnet_conditioning_scale=config["model"]["inference"]["addl_controlnet_conditioning_scale"]
-        self.callback_steps=config["model"]["inference"]["callback_steps"]
-        self.lora_path=config["lora"]["path"]
-        
+class IMGGenerator(EventlessWorker):
     def prepare_model(self):
         # load control net
         self.controlnet_scribble = ControlNetModel.from_pretrained(
@@ -118,11 +43,6 @@ class IMGGenerator(Worker):
         ).to(device=self.device)
         self.sd_pipe.register_addl_models(self.sd_sub)
         self.sd_pipe.schedule = DDIMScheduler_L.from_config(self.sd_pipe.scheduler.config)
-        if self.lora:
-            try:
-                self.sd_pipe.load_lora_weights(self.lora_path, weight_name=self.lora)
-            except Exception as e:
-                warnings.warn(f"Error loading lora, lora will be ignored. Error: {str(e)}")
 
     def prepare_image(self):
         mask_img=Image.open(f"./temp/{self.mask_img_uuid}.png")
@@ -185,40 +105,75 @@ class IMGGenerator(Worker):
         self.mask=transforms.ToTensor()(mask_img.convert("L")).squeeze().to(self.device)
         self.sub_image, self.surr_image=calc_sub_surr(mask_img, char_img)
 
-        #load image test
-        
-        # text_name="蔷=rose"
-        # with open(f"./test/LLM/{text_name}.json", "r") as f:
-        #     text_data = json.load(f)
+    def load_config(self):
+        self.device = config["model"]["device"]
+        self.dtype=config["model"].get("dtype","float16")
+        self.sd_name = config["model"]["name"]["stable_diffusion"]
+        self.scr_name= config["model"]["name"]["controlnet_scribble"]
+        self.seg_name= config["model"]["name"]["controlnet_scribble"]
+        self.positive_prompt=config["model"]["prompts"]["positive_prompt"]
+        self.negative_prompt=config["model"]["prompts"]["negative_prompt"]
+        self.num_inference_steps=config["model"]["inference"]["num_inference_steps"]
+        self.guidance_scale=config["model"]["inference"]["guidance_scale"]
+        self.controlnet_conditioning_scale=config["model"]["inference"]["controlnet_conditioning_scale"]
+        self.weights=config["model"]["inference"]["weights"]
+        self.addl_controlnet_conditioning_scale=config["model"]["inference"]["addl_controlnet_conditioning_scale"]
+        self.callback_steps=config["model"]["inference"]["callback_steps"]
+        self.lora_path=config["lora"]["path"]
 
-        # self.sub_prompt = text_data['sub_prompt']
-        # self.surr_prompt = text_data['surr_prompt']
+    def init(self):
+        self.load_config()
+        self.prepare_model()
 
-        # sub_img_path = "test/CCG/蔷=rose/sub_4.jpg"
-        # surr_img_path = "test/CCG/蔷=rose/surr.jpg"
+    def worker(self, **kwargs):
+        self.sub_prompt=kwargs.get('sub_prompt')
+        self.surr_prompt=kwargs.get('surr_prompt')
+        self.char_img_uuid=kwargs.get('char_img_uuid')
+        self.mask_img_uuid=kwargs.get('mask_img_uuid')
+        self.result_img_uuid=kwargs.get('result_img_uuid')
+        self.seed=kwargs.get('seed')
+        self.lora=kwargs.get('lora')
 
-        # sub_img = load_image(sub_img_path)
-        # surr_img = load_image(surr_img_path)
-
-        # mask_img_path = "test/CCG/蔷=rose/mask.jpg"
-        # self.mask_img = load_image(mask_img_path).convert("L")
-        # self.mask = transforms.ToTensor()(self.mask_img).squeeze().to(self.device)
-
-        # self.sub_image = IMGGenerator.resize_image(sub_img, res=128)
-        # self.surr_image = IMGGenerator.resize_image(surr_img, res=128)
-        # self.seed = random.sample(range(100000),1)[0]
-
-    @staticmethod
-    def resize_image(input_image, res=300):
-        W, H = input_image.size
-        H, W = float(H), float(W)
-        H = int(np.round(H / 64.0)) * 64
-        W = int(np.round(W / 64.0)) * 64
-        if res is None:
-            size_ = (W, H)
+        assert self.sub_prompt, f"found sub_prompt {self.sub_prompt}"
+        assert self.surr_prompt, f"found surr_prompt {self.surr_prompt}"
+        assert self.char_img_uuid, f"found char_img_uuid {self.char_img_uuid}"
+        assert self.mask_img_uuid, f"found mask_img_uuid {self.mask_img_uuid}"
+        assert self.result_img_uuid, f"found result_img_uuid {self.result_img_uuid}"
+        if not self.seed:
+            self.seed=random.sample(range(100000),1)[0]
+        if self.lora:
+            try:
+                self.sd_pipe.load_lora_weights(self.lora_path, weight_name=self.lora)
+            except Exception as e:
+                warnings.warn(f"Error loading lora, lora will be ignored. Error: {str(e)}")
         else:
-            k = res / min(W, H)
-            size_ = (int(W * k), int(H * k))
+            self.sd_pipe.unload_lora_weights()
+        
 
-        img_rsz = input_image.resize(size_)
-        return img_rsz
+        self.prepare_image()
+
+        def step_callback(step: int, timestep: int, latents: torch.FloatTensor):
+            self.progress.value=step
+
+        result_img = self.sd_pipe( 
+            prompt = ', '.join(self.surr_prompt)+', '+self.positive_prompt,
+            image = [self.surr_image],
+            height = self.sub_image.size[0], 
+            width = self.sub_image.size[1], 
+            num_inference_steps = self.num_inference_steps,
+            guidance_scale = self.guidance_scale,
+            negative_prompt = self.negative_prompt,
+            generator = torch.manual_seed(self.seed),
+            controlnet_conditioning_scale = [self.controlnet_conditioning_scale],
+
+            addl_prompts = [self.sub_prompt],
+            addl_images = [[self.sub_image] * len(self.controlnet_sub)],
+            weights = [self.weights], 
+            masks = [self.mask],
+            addl_ctrlnet_conditioning_scale = [self.addl_controlnet_conditioning_scale],
+
+            callback=step_callback,
+            callback_steps=self.callback_steps,
+        )
+        result_img.images[0].save(f"./temp/{self.result_img_uuid}.png")
+        return self.num_inference_steps

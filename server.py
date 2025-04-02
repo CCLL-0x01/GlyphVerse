@@ -6,6 +6,7 @@ from model.lora import get_lora_files
 from uuid import uuid4
 import os.path
 from typing import Dict
+from multiprocessing import Manager
 
 
 def create_server():
@@ -70,22 +71,23 @@ def create_server():
         return send_from_directory(temp_dir, filename)
     
     # image generator
-    app.image_generator_workers={}
+    app.image_generator_manager=Manager()
+    app.image_generator=IMGGenerator(app.image_generator_manager)
     @app.route('/start',methods=['POST'])
     def start():
         try:
             req_json=request.get_json()
             result_img_uuid=str(uuid4())
-            img_gen=IMGGenerator(
-                req_json["prompts"]["sub_prompt"],
-                req_json["prompts"]["surr_prompt"],
-                req_json["char_img"],
-                req_json["mask"],
-                result_img_uuid,
-                req_json["lora"],
-            )
-            app.image_generator_workers[img_gen.result_img_uuid]=img_gen
-            img_gen.run()
+            img_gen=app.image_generator.add_task({
+                'sub_prompt':req_json["prompts"]["sub_prompt"],
+                'surr_prompt':req_json["prompts"]["surr_prompt"],
+                'char_img_uuid':req_json["char_img"],
+                'mask_img_uuid':req_json["mask"],
+                'result_img_uuid':result_img_uuid,
+                'lora':req_json["lora"],
+            },new_id=result_img_uuid)
+            # app.image_generator_workers[img_gen.result_img_uuid]=img_gen
+            # img_gen.run()
             return jsonify({
                 "code":0,
                 "message":"success",
@@ -99,35 +101,54 @@ def create_server():
 
     @app.route('/status/<uuid>',methods=['GET'])
     def status(uuid):
-        if uuid in app.image_generator_workers:
+        is_finished, is_running, result=app.image_generator.get_status(uuid)
+        if is_finished:
             return jsonify({
                 "code":0,
                 "message":"success",
-                "status":app.image_generator_workers[uuid].get_status(),
+                "status":{
+                    'status': 'Complete',
+                    'progress': result
+                },
             })
-        else:
+
+        elif is_running:
             return jsonify({
-                "code":-1,
-                "message":"not found",
+                "code":0,
+                "message":"success",
+                "status":{
+                    'status': 'Running',
+                    'progress': result
+                },
+            })
+        
+        else: #pending
+            return jsonify({
+                "code":0,
+                "message":"success",
+                "status":{
+                    'status': 'Pending',
+                    'progress': 0,
+                },
             })
 
     #mask generator
-    app.mask_generator_workers={}
+    app.mask_generator_manager=Manager()
+    app.mask_generator=MaskBeautifier(app.mask_generator_manager)
     @app.route('/mask/start',methods=['POST'])
     def mask_start():
         try:
             req_json=request.get_json()
             result_img_uuids=[str(uuid4()) for _ in range(config['model']['typo']['gen_num'])]
             job_uuid=str(uuid4())
-            msk_gen=MaskBeautifier(
-                req_json["char_img"],
-                req_json["mask"],
-                req_json["prompts"]["sub_prompt"],
-                req_json["prompts"]["surr_prompt"],
-                result_img_uuids
-            )
-            app.mask_generator_workers[job_uuid]=msk_gen
-            msk_gen.run()
+            app.mask_generator.add_task({
+                'char_img_uuid':req_json["char_img"],
+                'mask_img_uuid':req_json["mask"],
+                'sub_prompt':req_json["prompts"]["sub_prompt"],
+                'surr_prompt':req_json["prompts"]["surr_prompt"],
+                'result_img_uuids':result_img_uuids
+            },new_id=job_uuid)
+            # app.mask_generator_workers[job_uuid]=msk_gen
             return jsonify({
                 "code":0,
                 "message":"success",
@@ -142,17 +163,49 @@ def create_server():
 
     @app.route('/mask/status/<uuid>',methods=['GET'])
     def mask_status(uuid):
-        if uuid in app.mask_generator_workers:
+        is_finished, is_running, result=app.mask_generator.get_status(uuid)
+        if is_finished:
             return jsonify({
                 "code":0,
                 "message":"success",
-                "status":app.mask_generator_workers[uuid].get_status(),
+                "status":{
+                    'status': 'Complete',
+                    'progress': result
+                }
             })
+        
+        elif is_running:
+            return jsonify({
+                "code":0,
+                "message":"success",
+                "status":{
+                    'status': 'Running',
+                    'progress': result
+                }
+            })
+
         else:
             return jsonify({
-                "code":-1,
-                "message":"not found",
+                "code":0,
+                "message":"success",
+                "status":{
+                    'status': 'Pending',
+                    'progress': result
+                }
             })
+
+
+        # if uuid in app.mask_generator_workers:
+        #     return jsonify({
+        #         "code":0,
+        #         "message":"success",
+        #         "status":app.mask_generator_workers[uuid].get_status(),
+        #     })
+        # else:
+        #     return jsonify({
+        #         "code":-1,
+        #         "message":"not found",
+        #     })
 
     @app.route('/lora_list',methods=['GET'])
     def lora_list():
@@ -161,5 +214,8 @@ def create_server():
             "message":"success",
             "lora_list":get_lora_files()
         })
+    
+    app.mask_generator.start()
+    app.image_generator.start()
 
     return app

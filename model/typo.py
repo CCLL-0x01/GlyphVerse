@@ -1,4 +1,4 @@
-from util.worker import Worker
+from util.worker import EventlessWorker
 from util.path import get_model_path
 from config import config
 
@@ -12,28 +12,9 @@ from controlnet_aux import HEDdetector
 from PIL import Image
 from typing import List
 
-class MaskBeautifier(Worker):
+class MaskBeautifier(EventlessWorker):
     '''Suggest beautified mask generated with semtypo
     makesure set self.char_img_uuid, self.mask_img_uuid before call self.worker()'''
-    def __init__(
-            self,
-            char_img_uuid:str,
-            mask_img_uuid:str,
-            sub_prompt:str,
-            surr_prompt:List[str],
-            result_img_uuids:List[str],
-        ):
-        super().__init__()
-        self.load_config()
-        self.char_img_uuid=char_img_uuid
-        self.mask_img_uuid=mask_img_uuid
-        self.sub_prompt=sub_prompt
-        self.surr_prompt=surr_prompt
-        self.result_img_uuids=result_img_uuids
-
-        #generate uuid here
-        # self.sub_result_uuids=[str(uuid4()) for _ in range(self.gen_num)]
-        # self.surr_result_uuid=str(uuid4())
     
     def load_models(self):
         self.scribble_preprocess = HEDdetector.from_pretrained(
@@ -43,7 +24,7 @@ class MaskBeautifier(Worker):
         ).to(self.device)
         self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
             pretrained_model_name_or_path=self.d2i_name,
-            torch_dtype=torch.float16, #TODO:dtype
+            # torch_dtype=torch.float16, #TODO:dtype
             device=self.device,
             local_files_only=True
         ).to(self.device)
@@ -58,7 +39,6 @@ class MaskBeautifier(Worker):
         self.strength=config['model']['typo']['strength']
         self.guidance_scale=config['model']['typo']['guidance_scale']
         self.positive_prompt=config['model']['prompts']['positive_prompt']
-
 
     def load_images(self):
         assert self.char_img_uuid
@@ -75,10 +55,18 @@ class MaskBeautifier(Worker):
 
         assert self.sub_img.size == self.surr_img.size
 
-    def worker(self):
+    def init(self):
+        self.load_config()
         self.load_models()
+    
+    def worker(self,**kwargs):
+        self.char_img_uuid=kwargs['char_img_uuid']
+        self.mask_img_uuid=kwargs['mask_img_uuid']
+        self.sub_prompt=kwargs['sub_prompt']
+        self.surr_prompt=kwargs['surr_prompt']
+        self.result_img_uuids=kwargs['result_img_uuids']
+
         self.load_images()
-        # seeds=random.sample(range(1000), self.gen_num)
 
         progress=0
         # surr img
@@ -114,5 +102,6 @@ class MaskBeautifier(Worker):
             new_img.save(f'./temp/{result_uuid}.png')
             progress+=1
             self.progress.value=progress
+        return progress
 
 
