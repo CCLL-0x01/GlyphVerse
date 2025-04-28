@@ -9,7 +9,7 @@ import torch
 import numpy as np
 from diffusers import StableDiffusionDepth2ImgPipeline
 from controlnet_aux import HEDdetector
-from PIL import Image
+from PIL import Image, ImageFilter
 from typing import List
 
 class MaskBeautifier(EventlessWorker):
@@ -20,25 +20,28 @@ class MaskBeautifier(EventlessWorker):
         self.scribble_preprocess = HEDdetector.from_pretrained(
             pretrained_model_or_path='lllyasviel/Annotators',
             filename='ControlNetHED.pth', 
+            local_files_only=True
             # torch_dtype=torch.float16 #TODO:dtype
-        ).to(self.device)
+        ).to(config['model']['device'])
         self.d2i=StableDiffusionDepth2ImgPipeline.from_pretrained(
-            pretrained_model_name_or_path=self.d2i_name,
-            torch_dtype=torch.float16 if self.device=='cuda' else torch.float, #TODO:dtype
-            device=self.device,
+            pretrained_model_name_or_path=config['model']['name']['sd_depth'],
+            torch_dtype=torch.float16 if config['model']['device']=='cuda' else torch.float, #TODO:dtype
+            device=config['model']['device'],
             local_files_only=True
         ).to('cpu')
 
-    def load_config(self):
-        self.device=config['model']['device']
-        self.d2i_name=config['model']['name']['sd_depth']
-        self.dtype=config['model']['dtype']
-        self.gen_num=config['model']['typo']['gen_num']
-        self.prompt_template=config['model']['prompts']['typo_prompt_template']
-        self.negative_prompt=config['model']['prompts']['negative_prompt']
-        self.strength=config['model']['typo']['strength']
-        self.guidance_scale=config['model']['typo']['guidance_scale']
-        self.positive_prompt=config['model']['prompts']['positive_prompt']
+    # def load_config(self):
+    #     self.device=config['model']['device']
+    #     self.d2i_name=config['model']['name']['sd_depth']
+    #     self.dtype=config['model']['dtype']
+    #     self.prompt_template=config['model']['prompts']['typo_prompt_template']
+    #     self.negative_prompt=config['model']['prompts']['negative_prompt']
+    #     self.sub_gen_num=config['model']['typo']['sub']['gen_num']
+    #     self.sub_strength=config['model']['typo']['sub']['strength']
+    #     self.sub_guidance_scale=config['model']['typo']['sub']['guidance_scale']
+    #     self.sub_positive_prompt=config['model']['prompts']['positive_prompt']
+    #     self.surr_strength=config['model']['typo']['surr']['strength']
+    #     self.surr_guidance_scale=config['model']['typo']['surr']['guidance_scale']
 
     def load_images(self):
         assert self.char_img_uuid
@@ -56,7 +59,7 @@ class MaskBeautifier(EventlessWorker):
         assert self.sub_img.size == self.surr_img.size
 
     def init(self):
-        self.load_config()
+        # self.load_config()
         self.load_models()
     
     def worker(self,**kwargs):
@@ -67,34 +70,51 @@ class MaskBeautifier(EventlessWorker):
         self.result_img_uuids=kwargs['result_img_uuids']
 
         self.load_images()
-        self.d2i=self.d2i.to(self.device)
+        self.d2i=self.d2i.to(config['model']['device'])
 
         progress=0
+        W, H = self.sub_img.size
+
         # surr img
-        surr_scribble=self.scribble_preprocess(
-            self.surr_img,
-            detect_resolution=500, #TODO: allow to customize img size 
-            image_resolution=500,
+        # surr_scribble=self.scribble_preprocess(
+        #     self.surr_img,
+        #     detect_resolution=500, #TODO: allow to customize img size 
+        #     image_resolution=500,
+        # )
+
+        surr_scribble=self.d2i(
+            prompt= config['model']['typo']['surr']['prompt_template'].format(
+                sub_prompt=', '.join(self.surr_prompt),
+                surr_prompt=', '.join(self.sub_prompt),
+                positive_prompt=config['model']['typo']['surr']['positive_prompt']
+            ),
+            image=self.surr_img, 
+            guidance_scale=config['model']['typo']['surr']['guidance_scale'],
+            height=H,
+            width=W,
+            negative_prompt=config['model']['typo']['surr']['negative_prompt'], 
+            strength=config['model']['typo']['surr']['strength'],
+            generator=torch.manual_seed(random.randint(0,1000-1))
         )
+
         # surr_scribble.save(f'./temp/{self.surr_result_uuid}.png')
-        new_surr_array=np.array(surr_scribble.convert('L').resize((500,500))).astype(np.uint8)
+        new_surr_array=np.array(surr_scribble.images[0].convert('L').resize((500,500))).astype(np.uint8)
         progress+=1
         self.progress.value+=1
 
         # sub img 
-        W, H = self.sub_img.size
         for result_uuid  in self.result_img_uuids:
             sub_depth=self.d2i(
-                prompt= self.prompt_template.format(
+                prompt= config['model']['typo']['sub']['prompt_template'].format(
                     sub_prompt=self.sub_prompt,
-                    positive_prompt=self.positive_prompt
+                    positive_prompt=config['model']['typo']['sub']['positive_prompt']
                 ),
-                image=self.sub_img, 
-                guidance_scale=self.guidance_scale,
+                image=Image.fromarray(np.array(self.sub_img)+np.array(self.sub_img.filter(ImageFilter.GaussianBlur(radius=config['model']['typo']['sub']['blur_radius'])))), 
+                guidance_scale=config['model']['typo']['sub']['guidance_scale'],
                 height=H,
                 width=W,
-                negative_prompt=self.negative_prompt, 
-                strength=self.strength,
+                negative_prompt=config['model']['typo']['sub']['negative_prompt'], 
+                strength=config['model']['typo']['sub']['strength'],
                 generator=torch.manual_seed(random.randint(0,1000-1))
             ).images[0]
             # sub_depth.save(f'./temp/{result_uuid}.png')

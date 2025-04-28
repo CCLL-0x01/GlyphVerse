@@ -83,6 +83,7 @@ def create_server():
                 'surr_prompt':req_json["prompts"]["surr_prompt"],
                 'char_img_uuid':req_json["char_img"],
                 'mask_img_uuid':req_json["mask"],
+                'beautified_mask_uuid':req_json["beautified_mask"],
                 'result_img_uuid':result_img_uuid,
                 'lora':req_json["lora"],
             },new_id=result_img_uuid)
@@ -139,7 +140,7 @@ def create_server():
     def mask_start():
         try:
             req_json=request.get_json()
-            result_img_uuids=[str(uuid4()) for _ in range(config['model']['typo']['gen_num'])]
+            result_img_uuids=[str(uuid4()) for _ in range(config['model']['typo']['sub']['gen_num'])]
             job_uuid=str(uuid4())
             app.mask_generator.add_task({
                 'char_img_uuid':req_json["char_img"],
@@ -219,4 +220,10 @@ def create_server():
     app.image_generator.start()
     print('models ready')
 
+    @app.route('/reload_config',methods=['GET'])
+    def reload_config():
+        config.reload()
+        return jsonify(config)
+
     return app
+

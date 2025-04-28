@@ -2,18 +2,26 @@
 debug = true
 host = '127.0.0.1'
 port = 5000
+use_reloader = false
 
 [model]
 device="cuda"    #cpu or cuda
 dtype="float16" #float16 by defaut
 
 [model.name]    #path of the models
-controlnet_scribble="./model/model_weights/sd-controlnet-scribble"
-controlnet_seg="./model/model_weights/sd-controlnet-seg"
-stable_diffusion="./model/model_weights/stable-diffusion-v1-5"
+# controlnet_scribble="./model/model_weights/sd-controlnet-scribble"
+controlnet_scribble="lllyasviel/sd-controlnet-scribble"
+# controlnet_seg="./model/model_weights/sd-controlnet-seg"
+controlnet_seg="lllyasviel/sd-controlnet-seg"
+# stable_diffusion="./model/model_weights/stable-diffusion-v1-5"
+# stable_diffusion="stabilityai/stable-diffusion-2-1"
+stable_diffusion="stable-diffusion-v1-5/stable-diffusion-v1-5"
 sd_depth="stabilityai/stable-diffusion-2-depth"
 
-[model.inference]
+[model.SD]
+prompt_template="{sub_prompt}, with {surr_prompts}. {positive_prompt}" 
+positive_prompt = "no humans, sunlight, TOON, no vignetting, complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
+negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 num_inference_steps=50
 guidance_scale=15
 controlnet_conditioning_scale=1.2
@@ -21,21 +29,27 @@ weights=0.85
 addl_controlnet_conditioning_scale=1.9
 callback_steps=1
 
-[model.typo]
+[model.typo.surr]
+prompt_template="fill in the black and white drawing of {surr_prompt}. The image should be: {positive_prompt}" 
+positive_prompt = "black and white, scribble, cartoon, decorative frame, decorative edge, flexible, creative, artistic, no humans, complete, clear, elegant, artistic, (easy background), (plain background), (simple background), (clean background), plain layout, simple layout"
+negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 guidance_scale=35
-strength=0.85
-gen_num=5
+strength=0.8
+
+[model.typo.sub]
+prompt_template="{sub_prompt}. {positive_prompt}" 
+positive_prompt = "black and white, vector graph, simple structure, clear, cartoon, no humans, no vignetting, complete, beautiful, clear,  elegant, artistic, (easy background), (plain background), (simple background), (clean background), easy layout, simple layout, one, detached, alone, "
+negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+guidance_scale=35
+strength=0.95
+gen_num=8
+blur_radius=7
 
 [model.LLM]
 LLM_base_url="https://api.deepseek.com"
 model_name="deepseek-chat"
 cache_path="./temp/LLM_cache.json"
-
-[model.prompts]
-typo_prompt_template="a black and white drawing of {sub_prompt}, {positive_prompt}" 
-positive_prompt = "no humans, no vignetting, complete, beautiful, clear,  elegant, artistic, (easy background), (plain background), (simple background), (clean background), easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space "
-negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
-llm_prompt = """
+prompt_template = """
 Give me a prompt of the subject and surrounding of the Chinese character(s) %s.
 The subject and each surrounding should be a few English words.
 You should focus on the thing that the character represents, and the surrounding should be something about the composition or the structure of the thing that the character represents.
@@ -43,12 +57,17 @@ Don't be so descriptive. A pattern of adj. + n. is enough, and the noun should b
 Your answer should be json format like this:
 {
     "sub_prompt": "Your Subject",
-    "surr_prompt": ["Your Surrounding1", "Your Surrounding2"] // 5-10 items
+    "surr_prompt": ["Your Surrounding1", "Your Surrounding2"] // 2-4 items
 }
-Example: If I give you the character 蔷, your answer should be:
+Example: If I give you the character 番,
+1. You think that 番 should be a concrete object and not something abstract, so it means tomatoes.
+2. You think about the structure of Chinese character 番, where the upper part resembles 采, the lower part resembles 田.
+3. The lower part, 田, whose shape can be artistically adjusted like a tomato, so that should be the subject prompt.
+4. Other parts, which resembles 采, seems like branches and leaves, so that should be surrounding parts.
+Therefore, you response in json like this:
 {
-    "sub_prompt": "a red rose flower blooming ",
-    "surr_prompt": ["brown vignette", "leaf", "slender branch", "thorns in a romantic atmosphere"]
+    "sub_prompt": "a red, round, juicy tomato",
+    "surr_prompt": ["brown branches", "green leaf"]
 }
 Your answer should include nothing but json. 
 """

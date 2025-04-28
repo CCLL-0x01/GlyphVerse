@@ -11,7 +11,7 @@ def knowledge_acquisition(char):
     else:
         for _ in range(3):
             try:
-                response = GPT(config["model"]["prompts"]["llm_prompt"] % char)
+                response = GPT(config["model"]["LLM"]["prompt_template"] % char)
                 response_json = json.loads(response.replace('```json', '').replace('```', ''))
                 assert response_json['sub_prompt']
                 assert response_json['surr_prompt']
