@@ -9,7 +9,7 @@
             <!--v-show=state.promptLoaded -->
             </div>
 
-            <button class="generate-button" v-if="state.state === 3" @click="handleGenerate">Generate</button>
+            <button class="generate-button" v-if="state.state === 3" @click="handleGenerate">生成</button>
         </div>
         <MaskInferStatus v-if="state.state == 4" @complete="handleMaskGenerate"/>
         <InferStatus v-if="state.state === 5" />

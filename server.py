@@ -77,22 +77,22 @@ def create_server():
     def start():
         try:
             req_json=request.get_json()
-            result_img_uuid=str(uuid4())
+            result_img_uuids=[str(uuid4()) for i in range(config['model']['SD']['gen_num'])]
             img_gen=app.image_generator.add_task({
                 'sub_prompt':req_json["prompts"]["sub_prompt"],
                 'surr_prompt':req_json["prompts"]["surr_prompt"],
                 'char_img_uuid':req_json["char_img"],
                 'mask_img_uuid':req_json["mask"],
                 'beautified_mask_uuid':req_json["beautified_mask"],
-                'result_img_uuid':result_img_uuid,
+                'result_img_uuid':result_img_uuids,
                 'lora':req_json["lora"],
-            },new_id=result_img_uuid)
+            },new_id=result_img_uuids[0])
             # app.image_generator_workers[img_gen.result_img_uuid]=img_gen
             # img_gen.run()
             return jsonify({
                 "code":0,
                 "message":"success",
-                "uuid":result_img_uuid,
+                "uuid":result_img_uuids,
             })
         except Exception as e:
             return jsonify({

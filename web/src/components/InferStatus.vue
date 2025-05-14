@@ -1,7 +1,13 @@
 <template>
     <div class="contents">
-        <p ref="refTxt"> {{ progress.status }} - {{ progress.progress }} </p>
-        <img ref="refImg" :src="`/temp/${result_uuid}.png`" v-if="progress.status === 'Complete'" />
+        <p ref="refTxt"> {{ ({
+            "Complete": "生成完成",
+            "Pending": "正在准备",
+            "Running": `正在生成 - 第${progress.progress}步`,
+        })[progress.status] || "..."}} </p>
+        <div v-if="progress.status === 'Complete'">
+            <img v-for="uuid in result_uuid" :key="uuid" :src="`/temp/${uuid}.png`" />
+        </div>
     </div>
 </template>
 
@@ -19,13 +25,13 @@ export default {
         const char_data = inject('char_data');
         const refTxt = ref(null);
         const refImg = ref(null);
-        const result_uuid = ref(null);
+        const result_uuid = ref([]);
 
         const initialize = async () => {
-            result_uuid.value = await start_inference(char_data);
-            console.log(result_uuid.value)
+            result_uuid.value = await start_inference(char_data); 
+            console.log(result_uuid.value);
             const intervalId = setInterval(async () => {
-                const status = await query_status(result_uuid.value);
+                const status = await query_status(result_uuid.value[0]);
                 progress.status = status.status;
                 progress.progress = status.progress;
                 if (status.status === 'Complete') {
@@ -33,7 +39,7 @@ export default {
                 }
             }, 3000);
         };
-        nextTick(initialize)
+        nextTick(initialize);
 
         return {
             progress,
@@ -47,8 +53,7 @@ export default {
 
 <style scoped>
 
-
-.container {
+.contents {
     border: 1px solid #ccc;
     border-radius: 30px;
     padding: 30px 60px;
@@ -68,6 +73,12 @@ export default {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+img {
+    width: 100px;
+    height: 100px;
+    margin: 10px;
 }
 
 </style>

@@ -10,7 +10,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container" style="display: none;">
         <div ref="loraChooserContainer">
             <input type="checkbox" v-model="lora_enabled"/> 使用LoRA增强生成：
             <select :disabled="!lora_enabled" v-model="chosen_lora">

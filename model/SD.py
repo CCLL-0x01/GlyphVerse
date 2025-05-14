@@ -47,6 +47,7 @@ class IMGGenerator(EventlessWorker):
         ).to('cpu')
         self.sd_pipe.register_addl_models(self.sd_sub)
         self.sd_pipe.schedule = DDIMScheduler_L.from_config(self.sd_pipe.scheduler.config)
+        print("ControlNet and StableDiffusion models loaded successfully.")
 
     def prepare_image(self):
         mask_img=Image.open(f"./temp/{self.mask_img_uuid}.png")
@@ -64,6 +65,8 @@ class IMGGenerator(EventlessWorker):
 
         self.mask=transforms.ToTensor()(mask_img.convert("L")).squeeze().to(config['model']['device'])
         self.sub_image, self.surr_image=calc_sub_surr(mask_img, beautified_img)
+        # self.sub_image=self.sub_image.resize((1024,1024))
+        # self.surr_image=self.surr_image.resize((1024,1024))
 
 
     def init(self):
@@ -75,7 +78,7 @@ class IMGGenerator(EventlessWorker):
         self.surr_prompt=kwargs.get('surr_prompt')
         self.char_img_uuid=kwargs.get('char_img_uuid')
         self.mask_img_uuid=kwargs.get('mask_img_uuid')
-        self.result_img_uuid=kwargs.get('result_img_uuid')
+        self.result_img_uuids=kwargs.get('result_img_uuid')
         self.beautified_mask_uuid=kwargs.get('beautified_mask_uuid')
         self.seed=kwargs.get('seed')
         self.lora=kwargs.get('lora')
@@ -84,7 +87,7 @@ class IMGGenerator(EventlessWorker):
         assert self.surr_prompt, f"found surr_prompt {self.surr_prompt}"
         assert self.char_img_uuid, f"found char_img_uuid {self.char_img_uuid}"
         assert self.mask_img_uuid, f"found mask_img_uuid {self.mask_img_uuid}"
-        assert self.result_img_uuid, f"found result_img_uuid {self.result_img_uuid}"
+        assert self.result_img_uuids, f"found result_img_uuid {self.result_img_uuids}"
         assert self.beautified_mask_uuid, f"found beautified_mask_uuid {self.beautified_mask_uuid}"
         
         if not self.seed:
@@ -104,32 +107,33 @@ class IMGGenerator(EventlessWorker):
         def step_callback(step: int, timestep: int, latents: torch.FloatTensor):
             self.progress.value=step
 
-        result_img = self.sd_pipe( 
-            prompt = config['model']['SD']['prompt_template'].format(
-                sub_prompt=self.sub_prompt,
-                surr_prompts=', '.join(self.surr_prompt),
-                positive_prompt=config['model']['SD']['positive_prompt'],
-                negative_prompt=config['model']['SD']['negative_prompt'],
-            ),
-            image = [self.surr_image],
-            height = self.sub_image.size[0], 
-            width = self.sub_image.size[1], 
-            num_inference_steps = config['model']['SD']['num_inference_steps'],
-            guidance_scale = config['model']['SD']['guidance_scale'],
-            negative_prompt = config['model']['SD']['negative_prompt'],
-            generator = torch.manual_seed(self.seed),
-            controlnet_conditioning_scale = [config['model']['SD']['controlnet_conditioning_scale']],
+        for img_uuid in self.result_img_uuids:
+            result_img = self.sd_pipe( 
+                prompt = config['model']['SD']['prompt_template'].format(
+                    sub_prompt=self.sub_prompt,
+                    surr_prompts=', '.join(self.surr_prompt),
+                    positive_prompt=config['model']['SD']['positive_prompt'],
+                    negative_prompt=config['model']['SD']['negative_prompt'],
+                ),
+                image = [self.surr_image],
+                height = self.sub_image.size[0], 
+                width = self.sub_image.size[1], 
+                num_inference_steps = config['model']['SD']['num_inference_steps'],
+                guidance_scale = config['model']['SD']['guidance_scale'],
+                negative_prompt = config['model']['SD']['negative_prompt'],
+                # generator = torch.manual_seed(self.seed),
+                controlnet_conditioning_scale = [config['model']['SD']['controlnet_conditioning_scale']],
 
-            addl_prompts = [self.sub_prompt],
-            addl_images = [[self.sub_image] * len(self.controlnet_sub)],
-            weights = [config['model']['SD']['weights']], 
-            masks = [self.mask],
-            addl_ctrlnet_conditioning_scale = [config['model']['SD']['addl_controlnet_conditioning_scale']],
+                addl_prompts = [self.sub_prompt],
+                addl_images = [[self.sub_image] * len(self.controlnet_sub)],
+                weights = [config['model']['SD']['weights']], 
+                masks = [self.mask],
+                addl_ctrlnet_conditioning_scale = [config['model']['SD']['addl_controlnet_conditioning_scale']],
 
-            callback=step_callback,
-            callback_steps=config['model']['SD']['callback_steps'],
-        )
-        result_img.images[0].save(f"./temp/{self.result_img_uuid}.png")
+                callback=step_callback,
+                callback_steps=config['model']['SD']['callback_steps'],
+            )
+            result_img.images[0].save(f"./temp/{img_uuid}.png")
 
         self.sd_pipe.to('cpu')
         self.sd_sub.to('cpu')

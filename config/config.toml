@@ -19,27 +19,31 @@ stable_diffusion="stable-diffusion-v1-5/stable-diffusion-v1-5"
 sd_depth="stabilityai/stable-diffusion-2-depth"
 
 [model.SD]
+# prompt_template="{sub_prompt}, with {surr_prompts}. {positive_prompt}" 
+positive_prompt = "artistic 3D text, no humans, sunlight, TOON, no vignetting, complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background,worst quality, low quality, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
 prompt_template="{sub_prompt}, with {surr_prompts}. {positive_prompt}" 
-positive_prompt = "no humans, sunlight, TOON, no vignetting, complete, beautiful, elegant, artistic, easy background, plain background, simple background, clean background, easy layout, plain layout, simple layout, one, individual, sole, isolated, solitary, detached, alone, subjectival, planar, orderly, negative space"
-negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+# positive_prompt = ""
+negative_prompt = "(deformed), vignetting, cluttered background, complex background, cluttered layout, complex layout, Camera dark angle, (bad), (ugly), lousy anatomy,  jpeg artifacts, uplicate, watermark, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic,  multiple, poly"
+# negative_prompt = ""
 num_inference_steps=50
-guidance_scale=15
-controlnet_conditioning_scale=1.2
+guidance_scale=35
+controlnet_conditioning_scale=1.99
 weights=0.85
-addl_controlnet_conditioning_scale=1.9
+addl_controlnet_conditioning_scale=1.5
 callback_steps=1
+gen_num=8
 
 [model.typo.surr]
 prompt_template="fill in the black and white drawing of {surr_prompt}. The image should be: {positive_prompt}" 
 positive_prompt = "black and white, scribble, cartoon, decorative frame, decorative edge, flexible, creative, artistic, no humans, complete, clear, elegant, artistic, (easy background), (plain background), (simple background), (clean background), plain layout, simple layout"
-negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+negative_prompt = "(deformed), vignetting, Camera dark angle, watermark, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, morbid, mutilated, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 guidance_scale=35
 strength=0.8
 
 [model.typo.sub]
 prompt_template="{sub_prompt}. {positive_prompt}" 
 positive_prompt = "black and white, vector graph, simple structure, clear, cartoon, no humans, no vignetting, complete, beautiful, clear,  elegant, artistic, (easy background), (plain background), (simple background), (clean background), easy layout, simple layout, one, detached, alone, "
-negative_prompt = "(deformed), vignetting, Camera dark angle, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
+negative_prompt = "(deformed), vignetting, Camera dark angle, watermark, (bad), (ugly), lousy anatomy, worst quality, low quality, jpeg artifacts, uplicate, extra things, cut off, deformities, bad anatomy, bad proportions, deformed, blurry, stereoscopic, cluttered background, complex background, cluttered layout, complex layout, multiple, poly"
 guidance_scale=35
 strength=0.95
 gen_num=8
